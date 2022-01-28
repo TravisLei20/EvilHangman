@@ -1,3 +1,233 @@
+
+// This is the Code that I wrote in the exam
+// I put it here because it is cleaner
+
+package hangman;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+public class EvilHangmanGame implements IEvilHangmanGame
+{
+  private SortedSet<Character> guessedLetters = new TreeSet<>();
+  private HashMap<String, HashSet<String>> myMap = new HashMap<>();
+  private HashSet<String> allWords = new HashSet<>();
+  private int wordLength;
+
+  // Constructor
+  public EvilHangmanGame()
+  {
+    wordLength = 0;
+  }
+
+  // This is the function that starts the game by storing the appropriate dictionary words into the allWords HashSet
+  @Override
+  public void startGame(File dictionary, int wordLength) throws IOException, EmptyDictionaryException
+  {
+    Scanner scanner = new Scanner(dictionary);
+
+    // Checks if the dictionary is empty
+    if (!scanner.hasNext())
+    {
+      throw new EmptyDictionaryException();
+    }
+
+    guessedLetters.clear();
+    myMap.clear();
+    this.wordLength = wordLength;
+
+    String word;
+
+    // Stores the appropriate words into allWords according to wordLength
+    while(scanner.hasNext())
+    {
+      word = scanner.next();
+      if (word.length() == wordLength)
+      {
+        allWords.add(word);
+      }
+    }
+
+    // Checks if allWords is empty
+    if (allWords.isEmpty())
+    {
+      throw new EmptyDictionaryException();
+    }
+
+  }
+
+  // This is the function that does most of the work
+  // It calculates and returns the best option for the EvilHangman
+  @Override
+  public Set<String> makeGuess(char guess) throws GuessAlreadyMadeException
+  {
+    guess = Character.toLowerCase(guess);
+
+    // Makes sure the guess hasn't already been made
+    if (guessedLetters.contains(guess))
+    {
+      throw new GuessAlreadyMadeException();
+    }
+
+    guessedLetters.add(guess);
+
+    // Gets all the words contained in allWords
+    for (String word : allWords)
+    {
+      // This makes sure the word has the same size as wordLength
+      // It then calculates the key and puts it into the map
+      if (word.length() == wordLength)
+      {
+        String key = getSubsetKey(word,guess);
+        calSubset(key,word);
+      }
+    }
+
+    // This gets the best subset for the Evil Hangman
+    allWords = getBestSubset(guess);
+
+    myMap.clear();
+
+    return allWords;
+  }
+
+  @Override
+  public SortedSet<Character> getGuessedLetters() {
+    return guessedLetters;
+  }
+
+  // This returns the key according to the guessed letter and the given word
+  public String getSubsetKey(String word, char guess)
+  {
+    StringBuilder key = new StringBuilder();
+    for (int i=0; i < word.length(); i++)
+    {
+      if (word.charAt(i) == guess)
+      {
+        key.append(guess);
+      }
+      else
+      {
+        key.append('-');
+      }
+    }
+    return key.toString();
+  }
+
+  // This calculates and either creates a new subset or adds the word to an existing one in the map
+  public void calSubset(String key, String word)
+  {
+    HashSet<String> set;
+    if (myMap.containsKey(key))
+    {
+      set=myMap.get(key);
+    }
+    else
+    {
+      set=new HashSet<>();
+    }
+    set.add(word);
+    myMap.put(key,set);
+  }
+
+  // This returns the best subset for the Evil Hangman according to the given letter
+  public HashSet<String> getBestSubset(char guess)
+  {
+    HashSet<String> bestSubset = new HashSet<>();
+    for (HashSet<String> set : myMap.values())
+    {
+      if (bestSubset.size() < set.size())
+      {
+        bestSubset = set;
+      }
+      else if (bestSubset.size() == set.size())
+      {
+        int count1 = 0;
+        int count2 = 0;
+        int rightMostIndex1 = 0;
+        int rightMostIndex2 = 0;
+
+        String word1 ="";
+        String word2 ="";
+
+        for (String w1 : bestSubset)
+        {
+          word1 = w1;
+          break;
+        }
+        for (String w2 : set)
+        {
+          word2 = w2;
+          break;
+        }
+
+        for (int i=0; i < wordLength; i++)
+        {
+          if (word1.charAt(i) == guess)
+          {
+            rightMostIndex1 = i;
+            count1++;
+          }
+          if (word2.charAt(i) == guess)
+          {
+            rightMostIndex2 = i;
+            count2++;
+          }
+        }
+
+        if (count1 < count2)
+        {
+          continue;
+        }
+        if (count1 > count2)
+        {
+          bestSubset = set;
+          continue;
+        }
+
+        if (rightMostIndex1 > rightMostIndex2)
+        {
+          continue;
+        }
+        if (rightMostIndex1 < rightMostIndex2)
+        {
+          bestSubset = set;
+          continue;
+        }
+
+        int nextRightMostIndex1 = 0;
+        int nextRightMostIndex2 = 0;
+
+        for (int i=0; i < wordLength; i++)
+        {
+          if (word1.charAt(i) == guess && (i != rightMostIndex1))
+          {
+            nextRightMostIndex1 = i;
+          }
+          if (word2.charAt(i) == guess && (i != rightMostIndex2))
+          {
+            nextRightMostIndex2 = i;
+          }
+        }
+
+        if (nextRightMostIndex1 > nextRightMostIndex2)
+        {
+          continue;
+        }
+        if (nextRightMostIndex1 < nextRightMostIndex2)
+        {
+          bestSubset = set;
+        }
+      }
+    }
+    return bestSubset;
+  }
+
+}
+
+
+/*
 package hangman;
 
 import java.io.File;
@@ -241,3 +471,5 @@ public class EvilHangmanGame implements IEvilHangmanGame
     }
   }
 }
+*/
+
