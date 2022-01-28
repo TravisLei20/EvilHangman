@@ -135,6 +135,8 @@ public class EvilHangmanGame implements IEvilHangmanGame
   public HashSet<String> getBestSubset(char guess)
   {
     HashSet<String> bestSubset = new HashSet<>();
+
+    // Get all the hashsets out of the map
     for (HashSet<String> set : myMap.values())
     {
       if (bestSubset.size() < set.size())
